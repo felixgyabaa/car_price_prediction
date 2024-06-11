@@ -96,3 +96,24 @@ df["peak-rpm"] = df["peak-rpm"].astype("float")
 df["peak-rpm"] = df["peak-rpm"].replace(np.nan, df["peak-rpm"].mean())
 
 # %%
+mode = df["num-of-doors"].mode()
+df["num-of-doors"] = df["num-of-doors"].replace(np.nan, mode[0])
+
+# %%
+df["price"].dropna(axis=0, inplace=True)
+
+# %%
+df.isnull().value_counts()
+
+# %%
+df.dropna(inplace=True)
+
+# %%
+df["normalized-losses"] = df["normalized-losses"].astype("int")
+
+# %%
+df[["bore", "stroke", "price", "peak-rpm"]] = df[
+    ["bore", "stroke", "price", "peak-rpm"]
+].astype("float")
+
+# %%
