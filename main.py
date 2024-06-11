@@ -131,3 +131,13 @@ df["highway-L/100km"] = 235 / df["highway-mpg"]
 df.drop(["city-mpg", "highway-mpg"], axis=1, inplace=True)
 
 # %%
+df[["length", "width", "height"]].head()
+
+# %%
+df["height"] = df["height"] / df["height"].max()
+
+# %%
+df["width"] = df["width"] / df["width"].max()
+df["length"] = df["length"] / df["length"].max()
+
+# %%
