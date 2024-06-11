@@ -117,3 +117,5 @@ df[["bore", "stroke", "price", "peak-rpm"]] = df[
 ].astype("float")
 
 # %%
+df["horsepower"] = df["horsepower"].astype("object")
+# %%
