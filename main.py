@@ -119,3 +119,15 @@ df[["bore", "stroke", "price", "peak-rpm"]] = df[
 # %%
 df["horsepower"] = df["horsepower"].astype("object")
 # %%
+df["city-L/100km"] = 235 / df["city-mpg"]
+
+# %%
+df.head()
+
+# %%
+df["highway-L/100km"] = 235 / df["highway-mpg"]
+
+# %%
+df.drop(["city-mpg", "highway-mpg"], axis=1, inplace=True)
+
+# %%
