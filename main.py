@@ -165,7 +165,6 @@ group_names = ["Low", "Medium", "High"]
 df["horsepower-binned"] = pd.cut(
     df["horsepower"], bins, labels=group_names, include_lowest=True
 )
-
 df[["horsepower", "horsepower-binned"]].head(20)
 
 # %%
@@ -179,4 +178,44 @@ plt.pyplot.xlabel("horsepower")
 plt.pyplot.ylabel("count")
 plt.pyplot.title("horsepower bins")
 
+# %%
+df.columns
+
+# %%
+dummy_variable = pd.get_dummies(df["fuel-type"])
+dummy_variable.head()
+
+# %%
+dummy_variable.rename(
+    columns={"diesel": "fuel-type-diesek", "gas": "fuel-type-gas"}, inplace=True
+)
+dummy_variable.head()
+
+# %%
+df = pd.concat([df, dummy_variable], axis=1)
+
+df.drop("fuel-type", axis=1, inplace=True)
+df.head()
+
+# %%
+dummy_variable_1 = pd.get_dummies(df["aspiration"])
+
+# %%
+dummy_variable_1.head()
+
+# %%
+dummy_variable_1.rename(
+    columns={"std": "aspiration_std", "turbo": "aspiration_turbo"}, inplace=True
+)
+
+# %%
+pd.concat([df, dummy_variable_1], axis=1)
+
+df.drop("aspiration", axis=1, inplace=True)
+
+# %%
+df.dtypes
+
+# %%
+df.to_csv("dataset/clean_df.csv")
 # %%
