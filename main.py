@@ -1,221 +1,168 @@
 # %%
-import pandas as pd
 import numpy as np
-import matplotlib.pylab as plt
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # %%
-url = "/Users/felixgyabaa/Documents/data_analysis/datasets/automobile/imports-85.data"
-
-df = pd.read_csv(url, header=None)
+df = pd.read_csv("dataset/clean_df.csv")
 
 # %%
-df.head()
-df.tail()
+df.drop({df.columns[0], df.columns[1]}, axis=1, inplace=True)
 
 # %%
-headers = [
-    "symboling",
-    "normalized-losses",
-    "make",
-    "fuel-type",
-    "aspiration",
-    "num-of-doors",
-    "body-style",
-    "drive-wheels",
-    "engine-location",
-    "wheel-base",
-    "length",
-    "width",
-    "height",
-    "curb-weight",
-    "engine-type",
-    "num-of-cylinders",
-    "engine-size",
-    "fuel-system",
-    "bore",
-    "stroke",
-    "compression-ratio",
-    "horsepower",
-    "peak-rpm",
-    "city-mpg",
-    "highway-mpg",
-    "price",
-]
-
-df.columns = headers
+print(df.dtypes)
 
 # %%
-path = "/Users/felixgyabaa/Documents/data_analysis/car_price_prediction/dataset/Automobile.csv"
-df.to_csv(path)
+df.corr(numeric_only=True)
 
 # %%
-df.replace("?", np.nan, inplace=True)
+df[["bore", "stroke", "compression-ratio", "horsepower"]].corr()
 
 # %%
-missing_data = df.isnull()
-
-# %%
-missing_data
-
-# %%
-for column in missing_data:
-    print(f"{column} : {missing_data[column].value_counts()}")
-
-# %%
-df["normalized-losses"] = df["normalized-losses"].replace(
-    np.nan, df["normalized-losses"].mean()
+sns.regplot(x="engine-size", y="price", data=df)
+plt.ylim(
+    0,
 )
 
 # %%
-df.dtypes
-# %%
-df["normalized-losses"] = df["normalized-losses"].astype("float")
+df[["engine-size", "price"]].corr()
 
 # %%
-df["stroke"] = df["stroke"].astype("float")
+sns.regplot(x="highway-L/100km", y="price", data=df)
 
 # %%
-df["stroke"] = df["stroke"].replace(np.nan, df["stroke"].mean())
+df[["highway-L/100km", "price"]].corr()
 
 # %%
-df["bore"] = df["bore"].astype("float")
+sns.regplot(x="stroke", y="price", data=df)
 
 # %%
-df["bore"] = df["bore"].replace(np.nan, df["bore"].mean())
+sns.boxplot(x="body-style", y="price", data=df)
 
 # %%
-df["horsepower"] = df["horsepower"].astype("float")
+sns.boxplot(x="engine-location", y="price", data=df)
 
 # %%
-df["horsepower"] = df["horsepower"].replace(np.nan, df["horsepower"].mean())
+sns.boxplot(x="drive-wheels", y="price", data=df)
 
 # %%
-df["peak-rpm"] = df["peak-rpm"].astype("float")
+df.describe(include=["object"])
 
 # %%
-df["peak-rpm"] = df["peak-rpm"].replace(np.nan, df["peak-rpm"].mean())
+df["drive-wheels"].value_counts()
 
 # %%
-mode = df["num-of-doors"].mode()
-df["num-of-doors"] = df["num-of-doors"].replace(np.nan, mode[0])
+drive_wheels_counts = df["drive-wheels"].value_counts().to_frame()
+drive_wheels_counts.rename(columns={"drive-wheels": "value_counts"}, inplace=True)
 
 # %%
-df["price"].dropna(axis=0, inplace=True)
+drive_wheels_counts
 
 # %%
-df.isnull().value_counts()
+engine_loc_count = df["engine-location"].value_counts().to_frame()
 
 # %%
-df.dropna(inplace=True)
+engine_loc_count
 
 # %%
-df["normalized-losses"] = df["normalized-losses"].astype("int")
+df["drive-wheels"].unique()
 
 # %%
-df[["bore", "stroke", "price", "peak-rpm"]] = df[
-    ["bore", "stroke", "price", "peak-rpm"]
-].astype("float")
+df_group_1 = df[["drive-wheels", "body-style", "price"]]
 
 # %%
-df["horsepower"] = df["horsepower"].astype("object")
-# %%
-df["city-L/100km"] = 235 / df["city-mpg"]
-
-# %%
-df.head()
-
-# %%
-df["highway-L/100km"] = 235 / df["highway-mpg"]
-
-# %%
-df.drop(["city-mpg", "highway-mpg"], axis=1, inplace=True)
-
-# %%
-df[["length", "width", "height"]].head()
-
-# %%
-df["height"] = df["height"] / df["height"].max()
-
-# %%
-df["width"] = df["width"] / df["width"].max()
-df["length"] = df["length"] / df["length"].max()
-
-# %%
-df["horsepower"] = df["horsepower"].astype(int, copy=True)
-
-# %%
-import matplotlib as plt
-from matplotlib import pyplot
-
-plt.pyplot.hist(df["horsepower"])
-
-# set x/y labels and plot title
-plt.pyplot.xlabel("horsepower")
-plt.pyplot.ylabel("count")
-plt.pyplot.title("horsepower bins")
-
-# %%
-bins = np.linspace(min(df["horsepower"]), max(df["horsepower"]), 4)
-bins
-
-# %%
-group_names = ["Low", "Medium", "High"]
-
-# %%
-df["horsepower-binned"] = pd.cut(
-    df["horsepower"], bins, labels=group_names, include_lowest=True
+df_group_1 = df_group_1.groupby(["drive-wheels"], as_index=False).mean(
+    numeric_only=True
 )
-df[["horsepower", "horsepower-binned"]].head(20)
+df_group_1
 
 # %%
-df["horsepower-binned"].value_counts()
+df_gptest = df[["drive-wheels", "body-style", "price"]]
+grouped_test1 = df_gptest.groupby(["drive-wheels", "body-style"], as_index=False).mean()
+grouped_test1
 
 # %%
-pyplot.hist(df["horsepower-binned"], bins=3)
-
-# set x/y labels and plot title
-plt.pyplot.xlabel("horsepower")
-plt.pyplot.ylabel("count")
-plt.pyplot.title("horsepower bins")
+grouped_pivot = grouped_test1.pivot(index="drive-wheels", columns="body-style")
+grouped_pivot
 
 # %%
-df.columns
+grouped_pivot = grouped_pivot.fillna(0)
 
 # %%
-dummy_variable = pd.get_dummies(df["fuel-type"])
-dummy_variable.head()
+sns.heatmap(grouped_pivot)
 
 # %%
-dummy_variable.rename(
-    columns={"diesel": "fuel-type-diesek", "gas": "fuel-type-gas"}, inplace=True
-)
-dummy_variable.head()
+df.corr(numeric_only=True)
 
 # %%
-df = pd.concat([df, dummy_variable], axis=1)
-
-df.drop("fuel-type", axis=1, inplace=True)
-df.head()
+from scipy import stats
 
 # %%
-dummy_variable_1 = pd.get_dummies(df["aspiration"])
+pearson_coef, p_value = stats.pearsonr(df["wheel-base"], df["price"])
+print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
 
 # %%
-dummy_variable_1.head()
+pearson_coef, p_value = stats.pearsonr(df["horsepower"], df["price"])
+print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
 
 # %%
-dummy_variable_1.rename(
-    columns={"std": "aspiration_std", "turbo": "aspiration_turbo"}, inplace=True
+pearson_coef, p_value = stats.pearsonr(df["length"], df["price"])
+print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
+
+# %%
+pearson_coef, p_value = stats.pearsonr(df["width"], df["price"])
+print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
+
+# %%
+pearson_coef, p_value = stats.pearsonr(df["curb-weight"], df["price"])
+print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
+
+# %%
+pearson_coef, p_value = stats.pearsonr(df["engine-size"], df["price"])
+print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
+
+# %%
+pearson_coef, p_value = stats.pearsonr(df["bore"], df["price"])
+print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
+
+# %%
+pearson_coef, p_value = stats.pearsonr(df["city-L/100km"], df["price"])
+print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
+
+# %%
+pearson_coef, p_value = stats.pearsonr(df["highway-L/100km"], df["price"])
+print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
+
+# %%
+grouped_test2 = df_gptest[["drive-wheels", "price"]].groupby(["drive-wheels"])
+grouped_test2.head()
+
+# %%
+grouped_test2.get_group("4wd")["price"]
+
+# %%
+# ANOVA
+f_val, p_val = stats.f_oneway(
+    grouped_test2.get_group("4wd")["price"],
+    grouped_test2.get_group("rwd")["price"],
+    grouped_test2.get_group("fwd")["price"],
 )
 
-# %%
-pd.concat([df, dummy_variable_1], axis=1)
-
-df.drop("aspiration", axis=1, inplace=True)
+print(f"ANOVA Results: F-Value = {f_val}\tP-Value = {p_val}")
 
 # %%
-df.dtypes
+f_val, p_val = stats.f_oneway(
+    grouped_test2.get_group("rwd")["price"],
+    grouped_test2.get_group("fwd")["price"],
+)
+
+print(f"ANOVA Results: F-Value = {f_val}\tP-Value = {p_val}")
 
 # %%
-df.to_csv("dataset/clean_df.csv")
-# %%
+f_val, p_val = stats.f_oneway(
+    grouped_test2.get_group("4wd")["price"],
+    grouped_test2.get_group("fwd")["price"],
+)
+
+print(f"ANOVA Results: F-Value = {f_val}\tP-Value = {p_val}")
