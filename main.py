@@ -1,168 +1,171 @@
 # %%
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
 import seaborn as sns
+import matplotlib.pyplot as plt
 
 # %%
 df = pd.read_csv("dataset/clean_df.csv")
+df
 
 # %%
-df.drop({df.columns[0], df.columns[1]}, axis=1, inplace=True)
+model = LinearRegression()
+model
 
 # %%
-print(df.dtypes)
+model.fit(df[["engine-size"]], df[["price"]])
+model.predict(df[["engine-size"]])[0:5]
 
 # %%
-df.corr(numeric_only=True)
+print(f"Coefficient: {model.coef_}\nIntercept: {model.intercept_}")
 
 # %%
-df[["bore", "stroke", "compression-ratio", "horsepower"]].corr()
+model1 = LinearRegression()
+model1
 
 # %%
-sns.regplot(x="engine-size", y="price", data=df)
-plt.ylim(
-    0,
+model1.fit(df[["highway-mpg"]], df[["price"]])
+model1.predict(df[["highway-mpg"]])[0:5]
+
+# %%
+print(f"Coefficient: {model1.coef_}\nIntercept: {model1.intercept_}")
+
+# %%
+model2 = LinearRegression()
+model2
+
+# %%
+Z = df[["horsepower", "curb-weight", "engine-size", "highway-mpg"]]
+model2.fit(Z, df[["price"]])
+
+# %%
+print(f"Coefficiets: {model2.coef_}\nIntercept: {model2.intercept_}")
+
+# %%
+model3 = LinearRegression()
+model3
+
+# %%
+model3.fit(df[["normalized-losses", "highway-mpg"]], df[["price"]])
+
+# %%
+print(f"Coefficiets: {model3.coef_}\nIntercept: {model3.intercept_}")
+
+# %%
+sns.regplot(x="highway-mpg", y="price", data=df)
+
+# %%
+sns.regplot(x="peak-rpm", y="price", data=df)
+
+
+# %%
+df[["peak-rpm", "highway-mpg", "price"]].corr()
+
+# %%
+sns.residplot(x=df[["highway-mpg"]], y=df[["price"]])
+
+# %%
+yhat = model2.predict(Z)
+
+# %%
+ax1 = sns.histplot(df["price"], color="r")
+sns.histplot(yhat, color="b", ax=ax1)
+plt.title("Actual vs Fitted Values for Price")
+plt.xlabel("Price (in dollars)")
+plt.ylabel("Proportion of Cars")
+plt.show()
+plt.close()
+
+
+# %%
+def PlotPolly(model, independent_variable, dependent_variabble, Name):
+    x_new = np.linspace(15, 55, 100)
+    y_new = model(x_new)
+
+    plt.plot(independent_variable, dependent_variabble, ".", x_new, y_new, "-")
+    plt.title("Polynomial Fit with Matplotlib for Price ~ Length")
+    ax = plt.gca()
+    ax.set_facecolor((0.898, 0.898, 0.898))
+    fig = plt.gcf()
+    plt.xlabel(Name)
+    plt.ylabel("Price of Cars")
+
+    plt.show()
+    plt.close()
+
+
+# %%
+f = np.polyfit(df["highway-mpg"], df["price"], 3)
+p = np.poly1d(f)
+print(p)
+
+# %%
+PlotPolly(
+    model=p,
+    independent_variable=df["highway-mpg"],
+    dependent_variabble=df["price"],
+    Name="highway-mpg",
 )
 
 # %%
-df[["engine-size", "price"]].corr()
+f1 = np.polyfit(df["highway-mpg"], df["price"], 11)
+p1 = np.poly1d(f1)
+print(p1)
+PlotPolly(p1, df["highway-mpg"], df["price"], "Highway MPG")
 
 # %%
-sns.regplot(x="highway-L/100km", y="price", data=df)
+from sklearn.preprocessing import PolynomialFeatures
 
 # %%
-df[["highway-L/100km", "price"]].corr()
+pr = PolynomialFeatures(degree=2)
 
 # %%
-sns.regplot(x="stroke", y="price", data=df)
+Z_pr = pr.fit_transform(Z)
 
 # %%
-sns.boxplot(x="body-style", y="price", data=df)
+Z_pr.shape
 
 # %%
-sns.boxplot(x="engine-location", y="price", data=df)
+Z.shape
 
 # %%
-sns.boxplot(x="drive-wheels", y="price", data=df)
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 # %%
-df.describe(include=["object"])
+Input = [
+    ("scale", StandardScaler()),
+    ("polynomial", PolynomialFeatures(include_bias=False)),
+    ("model", LinearRegression()),
+]
 
 # %%
-df["drive-wheels"].value_counts()
+pipe = Pipeline(Input)
+pipe
 
 # %%
-drive_wheels_counts = df["drive-wheels"].value_counts().to_frame()
-drive_wheels_counts.rename(columns={"drive-wheels": "value_counts"}, inplace=True)
+Z = Z.astype("float")
+pipe.fit(Z, df["price"])
 
 # %%
-drive_wheels_counts
+ypipe = pipe.predict(Z)
+ypipe[0:4]
 
 # %%
-engine_loc_count = df["engine-location"].value_counts().to_frame()
+X = df[["engine-size"]]
+Y = df[["price"]]
+
+model.fit(X, Y)
+print(f"The R-Squared Error is: {model.score(X,Y)}")
 
 # %%
-engine_loc_count
+yhat = model.predict(X)
 
 # %%
-df["drive-wheels"].unique()
+from sklearn.metrics import mean_squared_error
 
 # %%
-df_group_1 = df[["drive-wheels", "body-style", "price"]]
-
+mse = mean_squared_error(df["price"], yhat)
+print(f"The Mean Square Error is: {mse}")
 # %%
-df_group_1 = df_group_1.groupby(["drive-wheels"], as_index=False).mean(
-    numeric_only=True
-)
-df_group_1
-
-# %%
-df_gptest = df[["drive-wheels", "body-style", "price"]]
-grouped_test1 = df_gptest.groupby(["drive-wheels", "body-style"], as_index=False).mean()
-grouped_test1
-
-# %%
-grouped_pivot = grouped_test1.pivot(index="drive-wheels", columns="body-style")
-grouped_pivot
-
-# %%
-grouped_pivot = grouped_pivot.fillna(0)
-
-# %%
-sns.heatmap(grouped_pivot)
-
-# %%
-df.corr(numeric_only=True)
-
-# %%
-from scipy import stats
-
-# %%
-pearson_coef, p_value = stats.pearsonr(df["wheel-base"], df["price"])
-print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
-
-# %%
-pearson_coef, p_value = stats.pearsonr(df["horsepower"], df["price"])
-print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
-
-# %%
-pearson_coef, p_value = stats.pearsonr(df["length"], df["price"])
-print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
-
-# %%
-pearson_coef, p_value = stats.pearsonr(df["width"], df["price"])
-print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
-
-# %%
-pearson_coef, p_value = stats.pearsonr(df["curb-weight"], df["price"])
-print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
-
-# %%
-pearson_coef, p_value = stats.pearsonr(df["engine-size"], df["price"])
-print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
-
-# %%
-pearson_coef, p_value = stats.pearsonr(df["bore"], df["price"])
-print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
-
-# %%
-pearson_coef, p_value = stats.pearsonr(df["city-L/100km"], df["price"])
-print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
-
-# %%
-pearson_coef, p_value = stats.pearsonr(df["highway-L/100km"], df["price"])
-print(f"Pearson Coefficient: {pearson_coef} \nP-Value: {p_value}")
-
-# %%
-grouped_test2 = df_gptest[["drive-wheels", "price"]].groupby(["drive-wheels"])
-grouped_test2.head()
-
-# %%
-grouped_test2.get_group("4wd")["price"]
-
-# %%
-# ANOVA
-f_val, p_val = stats.f_oneway(
-    grouped_test2.get_group("4wd")["price"],
-    grouped_test2.get_group("rwd")["price"],
-    grouped_test2.get_group("fwd")["price"],
-)
-
-print(f"ANOVA Results: F-Value = {f_val}\tP-Value = {p_val}")
-
-# %%
-f_val, p_val = stats.f_oneway(
-    grouped_test2.get_group("rwd")["price"],
-    grouped_test2.get_group("fwd")["price"],
-)
-
-print(f"ANOVA Results: F-Value = {f_val}\tP-Value = {p_val}")
-
-# %%
-f_val, p_val = stats.f_oneway(
-    grouped_test2.get_group("4wd")["price"],
-    grouped_test2.get_group("fwd")["price"],
-)
-
-print(f"ANOVA Results: F-Value = {f_val}\tP-Value = {p_val}")
