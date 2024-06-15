@@ -1,171 +1,218 @@
 # %%
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LinearRegression
-import seaborn as sns
+
+# %%
+df = pd.read_csv("dataset/Automobile2.csv")
+df.head()
+
+# %%
+df._get_numeric_data()
+
+# %%
+from ipywidgets import interact, interactive, fixed, interact_manual
+
+# %%
 import matplotlib.pyplot as plt
-
-# %%
-df = pd.read_csv("dataset/clean_df.csv")
-df
-
-# %%
-model = LinearRegression()
-model
-
-# %%
-model.fit(df[["engine-size"]], df[["price"]])
-model.predict(df[["engine-size"]])[0:5]
-
-# %%
-print(f"Coefficient: {model.coef_}\nIntercept: {model.intercept_}")
-
-# %%
-model1 = LinearRegression()
-model1
-
-# %%
-model1.fit(df[["highway-mpg"]], df[["price"]])
-model1.predict(df[["highway-mpg"]])[0:5]
-
-# %%
-print(f"Coefficient: {model1.coef_}\nIntercept: {model1.intercept_}")
-
-# %%
-model2 = LinearRegression()
-model2
-
-# %%
-Z = df[["horsepower", "curb-weight", "engine-size", "highway-mpg"]]
-model2.fit(Z, df[["price"]])
-
-# %%
-print(f"Coefficiets: {model2.coef_}\nIntercept: {model2.intercept_}")
-
-# %%
-model3 = LinearRegression()
-model3
-
-# %%
-model3.fit(df[["normalized-losses", "highway-mpg"]], df[["price"]])
-
-# %%
-print(f"Coefficiets: {model3.coef_}\nIntercept: {model3.intercept_}")
-
-# %%
-sns.regplot(x="highway-mpg", y="price", data=df)
-
-# %%
-sns.regplot(x="peak-rpm", y="price", data=df)
+import seaborn as sns
 
 
 # %%
-df[["peak-rpm", "highway-mpg", "price"]].corr()
+def DistributionPlot(RedFunction, BlueFunction, RedName, BlueName, Title):
+    width = 12
+    height = 10
+    plt.figure(figsize=(width, height))
 
-# %%
-sns.residplot(x=df[["highway-mpg"]], y=df[["price"]])
+    ax1 = sns.kdeplot(RedFunction, color="r", label=RedName)
+    ax2 = sns.kdeplot(BlueFunction, color="b", label=BlueName, ax=ax1)
 
-# %%
-yhat = model2.predict(Z)
-
-# %%
-ax1 = sns.histplot(df["price"], color="r")
-sns.histplot(yhat, color="b", ax=ax1)
-plt.title("Actual vs Fitted Values for Price")
-plt.xlabel("Price (in dollars)")
-plt.ylabel("Proportion of Cars")
-plt.show()
-plt.close()
-
-
-# %%
-def PlotPolly(model, independent_variable, dependent_variabble, Name):
-    x_new = np.linspace(15, 55, 100)
-    y_new = model(x_new)
-
-    plt.plot(independent_variable, dependent_variabble, ".", x_new, y_new, "-")
-    plt.title("Polynomial Fit with Matplotlib for Price ~ Length")
-    ax = plt.gca()
-    ax.set_facecolor((0.898, 0.898, 0.898))
-    fig = plt.gcf()
-    plt.xlabel(Name)
-    plt.ylabel("Price of Cars")
-
+    plt.title(Title)
+    plt.xlabel("Price (in dollars)")
+    plt.ylabel("Proportion of Cars")
     plt.show()
     plt.close()
 
 
-# %%
-f = np.polyfit(df["highway-mpg"], df["price"], 3)
-p = np.poly1d(f)
-print(p)
+def PollyPlot(xtrain, xtest, y_train, y_test, lr, poly_transform):
+    width = 12
+    height = 10
+    plt.figure(figsize=(width, height))
+
+    # training data
+    # testing data
+    # lr:  linear regression object
+    # poly_transform:  polynomial transformation object
+
+    xmax = max([xtrain.values.max(), xtest.values.max()])
+
+    xmin = min([xtrain.values.min(), xtest.values.min()])
+
+    x = np.arange(xmin, xmax, 0.1)
+
+    plt.plot(xtrain, y_train, "ro", label="Training Data")
+    plt.plot(xtest, y_test, "go", label="Test Data")
+    plt.plot(
+        x,
+        lr.predict(poly_transform.fit_transform(x.reshape(-1, 1))),
+        label="Predicted Function",
+    )
+    plt.ylim([-10000, 60000])
+    plt.ylabel("Price")
+    plt.legend()
+
 
 # %%
-PlotPolly(
-    model=p,
-    independent_variable=df["highway-mpg"],
-    dependent_variabble=df["price"],
-    Name="highway-mpg",
+y_data = df["price"]
+x_data = df.drop("price", axis=1)
+
+# %%
+from sklearn.model_selection import train_test_split
+
+x_train, x_test, y_train, y_test = train_test_split(
+    x_data,
+    y_data,
+    test_size=0.4,
+    random_state=0,
+)
+
+print(
+    f"Number of test samples: {x_test.shape[0]}\nNumber of training samples: {x_train.shape[0]}"
 )
 
 # %%
-f1 = np.polyfit(df["highway-mpg"], df["price"], 11)
-p1 = np.poly1d(f1)
-print(p1)
-PlotPolly(p1, df["highway-mpg"], df["price"], "Highway MPG")
+from sklearn.linear_model import LinearRegression
+
+model_lre = LinearRegression()
+model_lre
+
+# %%
+model_lre.fit(x_train[["horsepower"]], y_train)
+
+# %%
+model_lre.score(x_test[["horsepower"]], y_test)
+
+# %%
+model_lre.score(x_train[["horsepower"]], y_train)
+
+# %%
+from sklearn.model_selection import cross_val_score
+
+# %%
+Rcross = cross_val_score(model_lre, x_data[["horsepower"]], y_data, cv=4)
+Rcross
+
+# %%
+print(
+    f"The means of the folds are: {Rcross.mean()} and the standard deviation is: {Rcross.std()}"
+)
+
+# %%
+-1 * cross_val_score(
+    model_lre, x_data[["horsepower"]], y_data, cv=4, scoring="neg_mean_squared_error"
+)
+
+# %%
+from sklearn.model_selection import cross_val_predict
+
+# %%
+yhat = cross_val_predict(model_lre, x_data[["horsepower"]], y_data, cv=4)
+yhat[0:5]
+
+# %%
+model_mlre = LinearRegression()
+model_mlre.fit(
+    x_train[["horsepower", "curb-weight", "engine-size", "highway-mpg"]], y_train
+)
+
+# %%
+yhat_train = model_mlre.predict(
+    x_train[["horsepower", "curb-weight", "engine-size", "highway-mpg"]]
+)
+yhat_train[0:5]
+
+# %%
+yhat_test = model_mlre.predict(
+    x_test[["horsepower", "curb-weight", "engine-size", "highway-mpg"]]
+)
+yhat_test[0:5]
+
+# %%
+Title = "Distribution  Plot of  Predicted Value Using Training Data vs Training Data Distribution"
+DistributionPlot(
+    RedFunction=y_train,
+    BlueFunction=yhat_train,
+    RedName="Actual Values (Train)",
+    BlueName="Predicted Values (Train)",
+    Title=Title,
+)
+
+# %%
+Title = "Distribution  Plot of  Predicted Value Using Test Data vs Data Distribution of Test Data"
+
+DistributionPlot(
+    RedFunction=y_test,
+    BlueFunction=yhat_test,
+    RedName="Actual Values (Test)",
+    BlueName="Predicted Values (Test)",
+    Title=Title,
+)
 
 # %%
 from sklearn.preprocessing import PolynomialFeatures
 
 # %%
-pr = PolynomialFeatures(degree=2)
+x_train, x_test, y_train, y_test = train_test_split(
+    x_data, y_data, test_size=0.45, random_state=0
+)
+# %%
+x_train
 
 # %%
-Z_pr = pr.fit_transform(Z)
+pr = PolynomialFeatures(degree=5)
+x_train_pr = pr.fit_transform(x_train[["horsepower"]])
+x_test_pr = pr.fit_transform(x_test[["horsepower"]])
+pr
 
 # %%
-Z_pr.shape
+poly = LinearRegression()
+poly.fit(x_train_pr, y_train)
 
 # %%
-Z.shape
+yhat = poly.predict(x_test_pr)
+yhat[0:5]
 
 # %%
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+print(f"Predicted Values: {yhat[0:5]}\nTrue Values: {y_test[0:5].values}")
 
 # %%
-Input = [
-    ("scale", StandardScaler()),
-    ("polynomial", PolynomialFeatures(include_bias=False)),
-    ("model", LinearRegression()),
-]
+PollyPlot(x_train["horsepower"], x_test["horsepower"], y_train, y_test, poly, pr)
 
 # %%
-pipe = Pipeline(Input)
-pipe
+poly.score(x_train_pr, y_train)
 
 # %%
-Z = Z.astype("float")
-pipe.fit(Z, df["price"])
+poly.score(x_test_pr, y_test)
 
 # %%
-ypipe = pipe.predict(Z)
-ypipe[0:4]
+Rsqu_test = []
 
-# %%
-X = df[["engine-size"]]
-Y = df[["price"]]
+order = [1, 2, 3, 4]
+for n in order:
+    pr = PolynomialFeatures(degree=n)
 
-model.fit(X, Y)
-print(f"The R-Squared Error is: {model.score(X,Y)}")
+    x_train_pr = pr.fit_transform(x_train[["horsepower"]])
 
-# %%
-yhat = model.predict(X)
+    x_test_pr = pr.fit_transform(x_test[["horsepower"]])
 
-# %%
-from sklearn.metrics import mean_squared_error
+    poly.fit(x_train_pr, y_train)
 
-# %%
-mse = mean_squared_error(df["price"], yhat)
-print(f"The Mean Square Error is: {mse}")
+    Rsqu_test.append(poly.score(x_test_pr, y_test))
+
+plt.plot(order, Rsqu_test)
+plt.xlabel("order")
+plt.ylabel("R^2")
+plt.title("R^2 Using Test Data")
+plt.text(3, 0.75, "Maximum R^2 ")
+
+
 # %%
